@@ -1,26 +1,29 @@
 using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Serilog;
 using VattenfallDynamicPriceApi.Extensions;
 using VattenfallDynamicPriceApi.Models.Evcc;
 using VattenfallDynamicPriceApi.Models.Vattenfall;
 
 namespace VattenfallDynamicPriceApi.Services;
 
-public partial class VattenfallDataService
+public partial class VattenfallDataService : IDisposable, IAsyncDisposable
 {
-	private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
+	private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(60);
 
 	public FlexTariffData[]? Data { get; private set; } = [];
 	
 	public EvccApiHourlyData[]? EvccData { get; private set; } = [];
+	
+	private Timer? _timer;
 
 	public async Task InitializeAsync()
 	{
-		Console.WriteLine("Refresh interval: " + CacheDuration);
+		Log.Information("Refresh interval: " + CacheDuration);
 		
 		await UpdateDataAsync();
-		_ = new Timer(RefreshTimerElapsed, null, CacheDuration, CacheDuration);
+		_timer = new Timer(RefreshTimerElapsed, null, CacheDuration, CacheDuration);
 	}
 
 	private decimal GetCurrentTariffForProductType(string productType, string description)
@@ -28,7 +31,7 @@ public partial class VattenfallDataService
 		var productData = Data?.FirstOrDefault(d => d.Product == productType);
 		if (productData == null)
 		{
-			Console.WriteLine($"Could not get current {description} tariff, no data");
+			Log.Error("Could not get current {Description} tariff, no data", description);
 			return 999;
 		}
 
@@ -38,7 +41,7 @@ public partial class VattenfallDataService
 			return currentTariff.AmountInclVat;
 
 		var highestTariff = productData.TariffData.Max(t => t.AmountInclVat);
-		Console.WriteLine($"Could not get current {description} tariff, no value found for current time, returning highest value:" + highestTariff);
+		Log.Error("Could not get current {Description} tariff, no value found for current time, returning highest value: {HighestTariff}", description, highestTariff);
 
 		return highestTariff;
 	}
@@ -53,13 +56,13 @@ public partial class VattenfallDataService
 	{
 		try
 		{
-			Console.WriteLine("Updating data");
+			Log.Information("Updating data");
 			Task.Run(UpdateDataAsync).Wait();
-			Console.WriteLine("Updated data");
+			Log.Information("Updated data");
 		}
 		catch (Exception e)
 		{
-			Console.WriteLine("Failed to update data: " + e);
+			Log.Error(e, "Failed to update data");
 		}
 	}
 
@@ -71,7 +74,7 @@ public partial class VattenfallDataService
 		var electricityData = Data.FirstOrDefault(d => d.Product == "E");
 		if (electricityData == null)
 		{
-			Console.WriteLine("Could not find electricity data in API response");
+			Log.Error("Could not find electricity data in API response");
 			return;
 		}
 		
@@ -110,7 +113,7 @@ public partial class VattenfallDataService
 		}
 		catch (Exception e)
 		{
-			Console.WriteLine("Failed to get API URL and key dynamically, falling back to known values: " + e);
+			Log.Error(e, "Failed to get API URL and key dynamically, falling back to known values");
 			return (SettingsProvider.Instance.Settings.KnownApiBaseUrl, SettingsProvider.Instance.Settings.KnownApiKey);
 		}
 	}
@@ -133,7 +136,7 @@ public partial class VattenfallDataService
 		if (string.IsNullOrWhiteSpace(scriptUrl) || !Uri.IsWellFormedUriString(scriptUrl, UriKind.Absolute))
 			throw new Exception("Could not find the epi-es2015.js script URL");
 
-		Console.WriteLine("Found epi JS script: " + scriptUrl);
+		Log.Information("Found epi JS script: {Url}", scriptUrl);
 
 		// Find API base URL in page script
 		var js = await httpClient.GetStringAsync(scriptUrl);
@@ -141,14 +144,14 @@ public partial class VattenfallDataService
 		if (string.IsNullOrWhiteSpace(apiBaseUrl))
 			throw new Exception("Could not find the API base URL");
 
-		Console.WriteLine("API base URL: " + apiBaseUrl);
+		Log.Information("API base URL: {ApiBaseUrl}", apiBaseUrl);
 
 		// Find API key in page script
 		var apiKey = TariffApiKeyRegex().Match(js).Groups["key"].Value;
 		if (string.IsNullOrWhiteSpace(apiKey))
 			throw new Exception("Could not find the API key");
 		
-		Console.WriteLine("API key: " + apiKey);
+		Log.Information("API key: {ApiKey}", apiKey);
 
 		// Update known values
 		SettingsProvider.Instance.Settings.KnownApiBaseUrl = apiBaseUrl;
@@ -165,4 +168,15 @@ public partial class VattenfallDataService
 	
 	[GeneratedRegex(@"ocpApimSubscriptionFeaturesDynamicTariffsKey:""(?<key>[^""]*)")]
 	private static partial Regex TariffApiKeyRegex();
+
+	public void Dispose()
+	{
+		_timer?.Dispose();
+	}
+
+	public async ValueTask DisposeAsync()
+	{
+		if (_timer != null)
+			await _timer.DisposeAsync();
+	}
 }

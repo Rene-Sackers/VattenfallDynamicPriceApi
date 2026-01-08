@@ -32,6 +32,8 @@ services:
   vattenfalldynamicpriceapi:
     container_name: vattenfalldynamicpriceapi
     image: ghcr.io/rene-sackers/vattenfall-dynamic-price-api:latest
+    environment:
+      - TZ=Europe/Amsterdam
     ports:
       - 8080:8080
 ```

@@ -24,6 +24,8 @@ public class SettingsProvider : IDisposable
 	private SettingsProvider()
 	{
 		var configurationRoot = new ConfigurationBuilder()
+			.AddJsonFile($"{SettingsFileName}.json", optional: true, reloadOnChange: true)
+			.AddJsonFile($"{SettingsFileName}.Development.json", optional: true, reloadOnChange: true)
 			.AddEnvironmentVariables(prefix: "VFAPI_")
 			.Build();
 		
