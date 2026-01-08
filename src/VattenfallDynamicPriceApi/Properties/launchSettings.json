@@ -8,8 +8,7 @@
 			"launchUrl": "v1/evcc",
 			"applicationUrl": "http://localhost:5110",
 			"environmentVariables": {
-				"ASPNETCORE_ENVIRONMENT": "Development",
-				"VFAPI_UseKnownValues": false
+				"ASPNETCORE_ENVIRONMENT": "Development"
 			}
 		}
 	}

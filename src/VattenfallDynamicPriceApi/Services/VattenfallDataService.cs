@@ -10,20 +10,21 @@ namespace VattenfallDynamicPriceApi.Services;
 
 public partial class VattenfallDataService : IDisposable, IAsyncDisposable
 {
-	private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(60);
 
 	public FlexTariffData[]? Data { get; private set; } = [];
 	
 	public EvccApiHourlyData[]? EvccData { get; private set; } = [];
 	
+	private TimeSpan _cacheDuration = TimeSpan.FromSeconds(60);
 	private Timer? _timer;
 
 	public async Task InitializeAsync()
 	{
-		Log.Information("Refresh interval: " + CacheDuration);
+		_cacheDuration = TimeSpan.FromSeconds(Math.Max(60, SettingsProvider.Instance.Settings.RefreshIntervalSeconds));
+		Log.Information("Refresh interval: {Interval}", _cacheDuration);
 		
 		await UpdateDataAsync();
-		_timer = new Timer(RefreshTimerElapsed, null, CacheDuration, CacheDuration);
+		_timer = new Timer(RefreshTimerElapsed, null, _cacheDuration, _cacheDuration);
 	}
 
 	private decimal GetCurrentTariffForProductType(string productType, string description)

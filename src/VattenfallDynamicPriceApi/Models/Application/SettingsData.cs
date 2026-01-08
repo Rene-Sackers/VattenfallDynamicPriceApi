@@ -10,6 +10,8 @@ public class SettingsData
 
 	public string KnownApiKey { get; set; } = string.Empty;
 
+	public int RefreshIntervalSeconds { get; set; } = 3600;
+
 	public LoggingSettings Logging { get; set; } = new();
 }
 
