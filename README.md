@@ -38,3 +38,38 @@ services:
     ports:
       - 8080:8080
 ```
+
+## Example EVCC tariffs config
+```yaml
+currency: EUR
+
+grid:
+  type: custom
+  forecast:
+    source: http
+    uri: https://example.com/v1/evcc
+```
+
+## Example Home Assistant sensor
+```yaml
+# configuration.yaml
+
+sensor:
+  - platform: rest
+    name: "Vattenfall Current Electricity Price"
+    resource: https://example.com/v1/now/electricity
+    unit_of_measurement: "€/kWh"
+    device_class: monetary
+    state_class: measurement
+    icon: mdi:currency-eur
+    scan_interval: 300
+
+  - platform: rest
+    name: "Vattenfall Current Gas Price"
+    resource: https://example.com/v1/now/gas
+    unit_of_measurement: "€/m³"
+    device_class: monetary
+    state_class: measurement
+    icon: mdi:currency-eur
+    scan_interval: 300
+```
