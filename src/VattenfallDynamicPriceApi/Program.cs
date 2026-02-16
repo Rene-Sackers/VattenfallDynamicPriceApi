@@ -33,9 +33,6 @@ static async Task RunAppAsync(string[] args, bool isApiClientGeneration)
 	var builder = WebApplication.CreateSlimBuilder(args);
 	
 	builder.Host.UseSerilog();
-	
-	if (isApiClientGeneration)
-		builder.Services.AddOpenApi();
 
 	builder.Services.ConfigureHttpJsonOptions(options =>
 	{
@@ -48,12 +45,12 @@ static async Task RunAppAsync(string[] args, bool isApiClientGeneration)
 
 	var dataService = new VattenfallDataService();
 
-	if (isApiClientGeneration)
-		app.MapOpenApi();
-	else
+	if (!isApiClientGeneration)
 		await dataService.InitializeAsync();
 
 	MapEndpoints(app, dataService);
+	
+	app.MapOpenApi();
 
 	await app.RunAsync();
 }
