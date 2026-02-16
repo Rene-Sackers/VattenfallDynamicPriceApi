@@ -8,9 +8,8 @@ using VattenfallDynamicPriceApi.Models.Vattenfall;
 
 namespace VattenfallDynamicPriceApi.Services;
 
-public partial class VattenfallDataService : IDisposable, IAsyncDisposable
+public partial class VattenfallDataService : IVattenfallDataService
 {
-
 	public FlexTariffData[]? Data { get; private set; } = [];
 	
 	public EvccApiHourlyData[]? EvccData { get; private set; } = [];
@@ -20,6 +19,8 @@ public partial class VattenfallDataService : IDisposable, IAsyncDisposable
 
 	public async Task InitializeAsync()
 	{
+		Log.Information("Initializing Vattenfall data service...");
+		
 		_cacheDuration = TimeSpan.FromSeconds(Math.Max(60, SettingsProvider.Instance.Settings.RefreshIntervalSeconds));
 		Log.Information("Refresh interval: {Interval}", _cacheDuration);
 		
@@ -57,7 +58,6 @@ public partial class VattenfallDataService : IDisposable, IAsyncDisposable
 	{
 		try
 		{
-			Log.Information("Updating data");
 			Task.Run(UpdateDataAsync).Wait();
 			Log.Information("Updated data");
 		}
@@ -69,6 +69,8 @@ public partial class VattenfallDataService : IDisposable, IAsyncDisposable
 
 	private async Task UpdateDataAsync()
 	{
+		Log.Information("Updating data");
+		
 		var (apiBaseUrl, apiKey) = await TryGetApiUrlAndKeyAsync();
 		Data = await GetFlexTariffDataAsync(apiBaseUrl, apiKey);
 		

@@ -6,7 +6,9 @@ using VattenfallDynamicPriceApi.Services;
 try
 {
 	SetUpSerilog();
-	await RunAppAsync(args);
+
+	var isApiClientGeneration = Environment.GetEnvironmentVariable("IS_GENERATING_API_CLIENT")?.ToLowerInvariant() == "true";
+	await RunAppAsync(args, isApiClientGeneration);
 }
 catch (Exception ex)
 {
@@ -20,28 +22,50 @@ finally
 
 return;
 
-static async Task RunAppAsync(string[] args)
+static async Task RunAppAsync(string[] args, bool isApiClientGeneration)
 {
+	if (isApiClientGeneration)
+	{
+		Log.Warning("Running in API client generation mode");
+		Console.WriteLine("Running in API client generation mode");
+	}
+	
 	var builder = WebApplication.CreateSlimBuilder(args);
 	
 	builder.Host.UseSerilog();
+	
+	if (isApiClientGeneration)
+		builder.Services.AddOpenApi();
 
 	builder.Services.ConfigureHttpJsonOptions(options =>
 	{
 		options.SerializerOptions.TypeInfoResolverChain.Insert(0, SourceGenerationContext.Default);
 	});
+	
+	builder.Services.AddOpenApi();
 
 	var app = builder.Build();
-	var dataService = new VattenfallDataService();
-	await dataService.InitializeAsync();
 
-	var version1Group = app.MapGroup("/v1");
-	version1Group.MapGet("/data", () => dataService.Data);
-	version1Group.MapGet("/evcc", () => dataService.EvccData);
-	version1Group.MapGet("/now/electricity", () => dataService.GetCurrentElectricityTariff());
-	version1Group.MapGet("/now/gas", () => dataService.GetCurrentGasTariff());
+	var dataService = new VattenfallDataService();
+
+	if (isApiClientGeneration)
+		app.MapOpenApi();
+	else
+		await dataService.InitializeAsync();
+
+	MapEndpoints(app, dataService);
 
 	await app.RunAsync();
+}
+
+static void MapEndpoints(WebApplication app, IVattenfallDataService vattenfallDataService)
+{
+	var version1Group = app.MapGroup("/v1");
+	
+	version1Group.MapGet("/data", () => vattenfallDataService.Data);
+	version1Group.MapGet("/evcc", () => vattenfallDataService.EvccData);
+	version1Group.MapGet("/now/electricity", vattenfallDataService.GetCurrentElectricityTariff);
+	version1Group.MapGet("/now/gas", vattenfallDataService.GetCurrentGasTariff);
 }
 
 static void SetUpSerilog()

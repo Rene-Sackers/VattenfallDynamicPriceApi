@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker Image CI & API client
 
 on:
   push:
@@ -7,9 +7,7 @@ on:
 
 jobs:
   build:
-    if: github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     
@@ -29,5 +27,16 @@ jobs:
     - name: Build the Docker image
       run: docker build . --file Dockerfile -t ghcr.io/rene-sackers/vattenfall-dynamic-price-api:$VERSION -t ghcr.io/rene-sackers/vattenfall-dynamic-price-api:latest
       
+    - name: Build the API client
+      run: |
+        docker compose -f compose-gen-client.yaml up --build --abort-on-container-exit
+        docker compose -f compose-gen-client.yaml down
+      
+    - name: Pack the API client
+      run: dotnet pack ./src/VattenfallDynamicPriceApi.ApiClient/VattenfallDynamicPriceApi.ApiClient.csproj -c Release -p:PackageVersion=$VERSIO --output ./nuget
+      
     - name: Push docker image
       run: docker push --all-tags ghcr.io/rene-sackers/vattenfall-dynamic-price-api
+      
+    - name: Push API client
+      run: dotnet nuget push ./nuget/*.nupkg -k ${{ secrets.GITHUB_TOKEN }} -s https://nuget.pkg.github.com/Rene-Sackers/index.json --skip-duplicate --no-symbols
