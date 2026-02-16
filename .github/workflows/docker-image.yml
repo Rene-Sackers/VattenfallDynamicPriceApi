@@ -29,11 +29,13 @@ jobs:
       
     - name: Build the API client
       run: |
+        mkdir ./src/VattenfallDynamicPriceApi.ApiClient/Generated
+        chmod -R 777 ./src/VattenfallDynamicPriceApi.ApiClient/Generated
         docker compose -f compose-gen-client.yaml up --build --abort-on-container-exit
         docker compose -f compose-gen-client.yaml down
       
     - name: Pack the API client
-      run: dotnet pack ./src/VattenfallDynamicPriceApi.ApiClient/VattenfallDynamicPriceApi.ApiClient.csproj -c Release -p:PackageVersion=$VERSIO --output ./nuget
+      run: dotnet pack ./src/VattenfallDynamicPriceApi.ApiClient/VattenfallDynamicPriceApi.ApiClient.csproj -c Release -p:PackageVersion=$VERSION --output ./nuget
       
     - name: Push docker image
       run: docker push --all-tags ghcr.io/rene-sackers/vattenfall-dynamic-price-api
