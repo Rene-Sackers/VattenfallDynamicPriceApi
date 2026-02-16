@@ -1,15 +1,19 @@
-﻿name: vattenfalldynamicpriceapi
-services:
-  vattenfalldynamicpriceapi:
-    container_name: vattenfalldynamicpriceapi
+﻿services:
+  api:
     image: vattenfalldynamicpriceapi
     build:
       dockerfile: Dockerfile
     ports:
       - 8080:8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/openapi/v1.json"]
+      interval: 1s
+      timeout: 1s
+      retries: 15
+      start_period: 1s
     environment:
+      - IS_GENERATING_API_CLIENT=true
       - TZ=Europe/Amsterdam
-      - ASPNETCORE_URLS=http://+:8080
       # You should be able to leave these commented, but if something changes in production, this could be a quick fix
       #- VFAPI_UseKnownValues=false
       #- VFAPI_ScrapePageUrl=

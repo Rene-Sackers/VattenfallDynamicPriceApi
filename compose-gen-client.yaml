@@ -1,0 +1,25 @@
+﻿# docker compose -f compose-gen-client.yaml up --build --abort-on-container-exit
+# docker compose -f compose-gen-client.yaml down
+
+services:
+  api:
+    build: .
+    environment:
+      - IS_GENERATING_API_CLIENT=true
+      - ASPNETCORE_URLS=http://+:8080
+
+  generate-client:
+    image: mcr.microsoft.com/openapi/kiota:1.30.0
+    depends_on:
+      - api
+    command: >
+      generate
+      --language CSharp
+      --openapi http://api:8080/openapi/v1.json
+      --output /output
+      --namespace-name VattenfallDynamicPriceApi.ApiClient
+      --class-name ApiClient
+      --clean-output
+    volumes:
+      - ./src/VattenfallDynamicPriceApi.ApiClient/Generated:/output
+    network_mode: service:api 
