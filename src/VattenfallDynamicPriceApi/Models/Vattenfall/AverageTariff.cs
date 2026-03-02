@@ -5,7 +5,7 @@ namespace VattenfallDynamicPriceApi.Models.Vattenfall;
 public class AverageTariff
 {
 	[JsonPropertyName("date")]
-	public DateTime Date { get; set; }
+	public DateTimeOffset Date { get; set; }
 
 	[JsonPropertyName("amountInclVat")]
 	public decimal AmountInclVat { get; set; }

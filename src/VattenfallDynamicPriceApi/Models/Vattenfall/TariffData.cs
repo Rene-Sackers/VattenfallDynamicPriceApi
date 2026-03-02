@@ -5,10 +5,10 @@ namespace VattenfallDynamicPriceApi.Models.Vattenfall;
 public class TariffData
 {
 	[JsonPropertyName("startTime")]
-	public DateTime StartTime { get; set; }
+	public DateTimeOffset StartTime { get; set; }
 
 	[JsonPropertyName("endTime")]
-	public DateTime EndTime { get; set; }
+	public DateTimeOffset EndTime { get; set; }
 
 	[JsonPropertyName("isMissingPeriod")]
 	public bool IsMissingPeriod { get; set; }

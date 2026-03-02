@@ -59,7 +59,6 @@ public partial class VattenfallDataService : IVattenfallDataService
 		try
 		{
 			Task.Run(UpdateDataAsync).Wait();
-			Log.Information("Updated data");
 		}
 		catch (Exception e)
 		{
@@ -83,12 +82,14 @@ public partial class VattenfallDataService : IVattenfallDataService
 		
 		EvccData = electricityData.TariffData.Select(td => new EvccApiHourlyData
 			{
-				Start = td.StartTime.ToUtcKeepTimeAsIs(),
-				End = td.EndTime.ToUtcKeepTimeAsIs(),
+				Start = td.StartTime.UtcDateTime,
+				End = td.EndTime.UtcDateTime,
 				Value = td.AmountInclVat
 			})
 			.OrderBy(td => td.Start)
 			.ToArray();
+		
+		Log.Information("Updated data");
 	}
 
 	private static async Task<FlexTariffData[]> GetFlexTariffDataAsync(string apiBaseUrl, string apiKey)
