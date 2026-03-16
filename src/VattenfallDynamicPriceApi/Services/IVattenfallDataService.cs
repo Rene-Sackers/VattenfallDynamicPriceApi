@@ -10,4 +10,5 @@ public interface IVattenfallDataService : IDisposable, IAsyncDisposable
 	Task InitializeAsync();
 	decimal GetCurrentElectricityTariff();
 	decimal GetCurrentGasTariff();
+	decimal GetCurrentElectricityExportTariff();
 }

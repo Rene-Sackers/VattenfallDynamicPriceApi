@@ -6,16 +6,18 @@ Seeing as of the time of writing, there is no official API to get hourly prices 
 
 ## Endpoints
 
-| URL                 | Description                                                                                          |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| /v1/data            | Provides parsed data from Vattenfall                                                                 |
-| /v1/evcc            | Provides data compatible with [EVCC](https://docs.evcc.io/en/docs/tariffs#dynamic-electricity-price) |
-| /v1/now/electricity | Provides the current price for electricity                                                           |
-| /v1/now/gas         | Provides the current price for gas                                                                   |
+| URL                        | Description                                                                                          |
+| -------------------------- | ---------------------------------------------------------------------------------------------------- |
+| /v1/data                   | Provides parsed data from Vattenfall                                                                 |
+| /v1/evcc                   | Provides data compatible with [EVCC](https://docs.evcc.io/en/docs/tariffs#dynamic-electricity-price) |
+| /v1/now/electricity        | Provides the current price for importing electricity                                                 |
+| /v1/now/electricity/import | Provides the current price for importing electricity (same as previous)                              |
+| /v1/now/electricity/export | Provides the current return price for exporting electricity                                          |
+| /v1/now/gas                | Provides the current price for importing gas                                                         |
 
 ## Environment variables
 
-You should *not* have to configure these, but they're available just in case.
+You should _not_ have to configure these, but they're available just in case.
 
 | Var                          | Default       | Description                                                                                                                                                                                                                                                                  |
 | ---------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -27,7 +29,8 @@ You should *not* have to configure these, but they're available just in case.
 | VFAPI_RefreshIntervalSeconds | 3600          | The time between API data refreshes                                                                                                                                                                                                                                          |
 
 ## Example output data
-Endpoint: `/v1/data`
+
+### `/v1/data`
 
 ```json
 [
@@ -109,7 +112,13 @@ Endpoint: `/v1/data`
 ]
 ```
 
+### /v1/now/(electricity|electricity/import|electricity/export|gas)
+```json
+0.21
+```
+
 ## Docker compose
+
 ```yaml
 name: vattenfalldynamicpriceapi
 services:
@@ -123,6 +132,7 @@ services:
 ```
 
 ## Example Home Assistant sensor
+
 ```yaml
 # configuration.yaml
 
@@ -147,6 +157,7 @@ sensor:
 ```
 
 ## Example EVCC tariffs config
+
 ```yaml
 currency: EUR
 
@@ -164,6 +175,7 @@ grid:
 The application publishes an OpenAPI spec at: `/openapi/v1.json`. Use this to generate clients.
 
 ### .NET
+
 A pre-built .NET API client is available, NuGet feed: `https://nuget.pkg.github.com/Rene-Sackers/index.json`
 
 ```

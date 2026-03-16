@@ -28,31 +28,35 @@ public partial class VattenfallDataService : IVattenfallDataService
 		_timer = new Timer(RefreshTimerElapsed, null, _cacheDuration, _cacheDuration);
 	}
 
-	private decimal GetCurrentTariffForProductType(string productType, string description)
+	private TariffData? GetCurrentTariffForProductType(string productType, string description)
 	{
 		var productData = Data?.FirstOrDefault(d => d.Product == productType);
 		if (productData == null)
 		{
 			Log.Error("Could not get current {Description} tariff, no data", description);
-			return 999;
+			return null;
 		}
 
-		var now = DateTime.Now;
+		var now = DateTimeOffset.Now;
 		var currentTariff = productData.TariffData.FirstOrDefault(d => d.StartTime <= now && d.EndTime >= now);
 		if (currentTariff != null)
-			return currentTariff.AmountInclVat;
+			return currentTariff;
 
-		var highestTariff = productData.TariffData.Max(t => t.AmountInclVat);
-		Log.Error("Could not get current {Description} tariff, no value found for current time, returning highest value: {HighestTariff}", description, highestTariff);
+		Log.Error("Could not get current {Description} tariff, no value found for current time", description);
 
-		return highestTariff;
+		return null;
 	}
 
 	public decimal GetCurrentElectricityTariff()
-		=> GetCurrentTariffForProductType("E", "electricity");
-	
+	{
+		return GetCurrentTariffForProductType("E", "electricity")?.AmountInclVat ?? 999;
+	}
+
 	public decimal GetCurrentGasTariff()
-		=> GetCurrentTariffForProductType("G", "gas");
+		=> GetCurrentTariffForProductType("G", "gas")?.AmountInclVat ?? 999;
+
+	public decimal GetCurrentElectricityExportTariff()
+		=> GetCurrentTariffForProductType("E", "electricity export")?.Details.FirstOrDefault(d => d.Type == "PRICE")?.AmountExclVat ?? 999;
 
 	private void RefreshTimerElapsed(object? _)
 	{
@@ -71,6 +75,12 @@ public partial class VattenfallDataService : IVattenfallDataService
 		Log.Information("Updating data");
 		
 		var (apiBaseUrl, apiKey) = await TryGetApiUrlAndKeyAsync();
+		if (string.IsNullOrWhiteSpace(apiBaseUrl) || string.IsNullOrWhiteSpace(apiKey))
+		{
+			Log.Error("Could not get API URL or key");
+			return;
+		}
+		
 		Data = await GetFlexTariffDataAsync(apiBaseUrl, apiKey);
 		
 		var electricityData = Data.FirstOrDefault(d => d.Product == "E");
@@ -160,6 +170,9 @@ public partial class VattenfallDataService : IVattenfallDataService
 		// Update known values
 		SettingsProvider.Instance.Settings.KnownApiBaseUrl = apiBaseUrl;
 		SettingsProvider.Instance.Settings.KnownApiKey = apiKey;
+		
+		// Really don't like this, but it'll do for now
+		SettingsProvider.Instance.Settings.UseKnownValues = true;
 		
 		return (apiBaseUrl, apiKey);
 	}

@@ -62,6 +62,8 @@ static void MapEndpoints(WebApplication app, IVattenfallDataService vattenfallDa
 	version1Group.MapGet("/data", () => vattenfallDataService.Data);
 	version1Group.MapGet("/evcc", () => vattenfallDataService.EvccData);
 	version1Group.MapGet("/now/electricity", vattenfallDataService.GetCurrentElectricityTariff);
+	version1Group.MapGet("/now/electricity/import", vattenfallDataService.GetCurrentElectricityTariff);
+	version1Group.MapGet("/now/electricity/export", vattenfallDataService.GetCurrentElectricityExportTariff);
 	version1Group.MapGet("/now/gas", vattenfallDataService.GetCurrentGasTariff);
 }
 
