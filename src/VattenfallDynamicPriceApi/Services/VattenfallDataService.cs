@@ -48,15 +48,13 @@ public partial class VattenfallDataService : IVattenfallDataService
 	}
 
 	public decimal GetCurrentElectricityTariff()
-	{
-		return GetCurrentTariffForProductType("E", "electricity")?.AmountInclVat ?? 999;
-	}
+		=> GetCurrentTariffForProductType("E", "electricity")?.AmountInclVat ?? 0;
 
 	public decimal GetCurrentGasTariff()
-		=> GetCurrentTariffForProductType("G", "gas")?.AmountInclVat ?? 999;
+		=> GetCurrentTariffForProductType("G", "gas")?.AmountInclVat ?? 0;
 
 	public decimal GetCurrentElectricityExportTariff()
-		=> GetCurrentTariffForProductType("E", "electricity export")?.Details.FirstOrDefault(d => d.Type == "PRICE")?.AmountExclVat ?? 999;
+		=> GetCurrentTariffForProductType("E", "electricity export")?.Details.FirstOrDefault(d => d.Type == "PRICE")?.AmountExclVat ?? 0;
 
 	private void RefreshTimerElapsed(object? _)
 	{
